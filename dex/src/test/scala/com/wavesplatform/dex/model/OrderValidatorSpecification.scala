@@ -1,6 +1,5 @@
 package com.wavesplatform.dex.model
 
-import cats.syntax.either._
 import com.google.common.base.Charsets
 import com.wavesplatform.account.{Address, KeyPair}
 import com.wavesplatform.common.state.ByteStr

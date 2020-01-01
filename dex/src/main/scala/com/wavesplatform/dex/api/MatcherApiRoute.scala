@@ -21,7 +21,14 @@ import com.wavesplatform.dex.caches.RateCache
 import com.wavesplatform.dex.effect.FutureResult
 import com.wavesplatform.dex.error.MatcherError
 import com.wavesplatform.dex.grpc.integration.exceptions.WavesNodeConnectionLostException
-import com.wavesplatform.dex.market.MatcherActor.{ForceSaveSnapshots, ForceStartOrderBook, GetMarkets, GetSnapshotOffsets, MarketData, SnapshotOffsetsResponse}
+import com.wavesplatform.dex.market.MatcherActor.{
+  ForceSaveSnapshots,
+  ForceStartOrderBook,
+  GetMarkets,
+  GetSnapshotOffsets,
+  MarketData,
+  SnapshotOffsetsResponse
+}
 import com.wavesplatform.dex.market.OrderBookActor._
 import com.wavesplatform.dex.model._
 import com.wavesplatform.dex.queue.{QueueEvent, QueueEventWithMeta}
@@ -218,7 +225,7 @@ case class MatcherApiRoute(assetPairBuilder: AssetPairBuilder,
         import MatcherPublicSettings.OrderFeePublicSettings._
         SimpleResponse(
           code = StatusCodes.OK,
-          js = Json.toJson(
+          js = Json.toJsObject(
             MatcherPublicSettings(
               priceAssets = matcherSettings.priceAssets,
               orderFee = matcherSettings.orderFee match {
@@ -227,10 +234,7 @@ case class MatcherApiRoute(assetPairBuilder: AssetPairBuilder,
                 case OrderFeeSettings.PercentSettings(assetType, minFee)    => Percent(assetType, minFee)
               },
               orderVersions = allowedOrderVersions.toSeq.sorted
-            )) match {
-            case r: JsObject => r
-            case r           => throw new IllegalStateException(s"Imposibru! $r")
-          }
+            ))
         )
       }
     )
@@ -345,7 +349,7 @@ case class MatcherApiRoute(assetPairBuilder: AssetPairBuilder,
     }
   }
 
-  private def orderBookInfoJson(pair: AssetPair): JsValue = Json.toJson(
+  private def orderBookInfoJson(pair: AssetPair): JsObject = Json.toJsObject(
     OrderBookInfo(
       restrictions = matcherSettings.orderRestrictions.get(pair),
       matchingRules = OrderBookInfo.MatchingRuleSettings(tickSize = getActualTickSize(pair).toDouble)
@@ -409,12 +413,7 @@ case class MatcherApiRoute(assetPairBuilder: AssetPairBuilder,
                   "priceAssetInfo"  -> m.priceAssetinfo,
                   "created"         -> m.created
                 )
-                .deepMerge {
-                  orderBookInfoJson(m.pair) match {
-                    case x: JsObject => x
-                    case _           => throw new IllegalStateException("Impossibru!")
-                  }
-                }
+                .deepMerge(orderBookInfoJson(m.pair))
             }
           )
         )
